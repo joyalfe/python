@@ -1,3 +1,4 @@
+#pip install cx_Oracle xlsxwriter
 import cx_Oracle
 import xlsxwriter
 
