@@ -1,0 +1,44 @@
+
+
+
+'''
+python script that will do the following , read a text file and zip the file that are provided in the text file to one file and copy this zip file to a network share by creating a new folder with the machine name if the folder on the network share doesnt exist.
+
+To use this script, create a text file called file_list.txt in the same directory as the script, and add the file paths to be zipped, with each path on a new line. Then, update the file_list_path and network_share_path variables to match the location of the text file and the network share. Finally, run the script and it should create a zip file containing the listed files, and copy the zip file to a new folder on the network share with the machine name.
+
+'''
+
+import os
+import shutil
+import zipfile
+import socket
+
+# Path to the text file containing the file paths to zip
+file_list_path = "file_list.txt"
+
+# Path to the network share where the zip file will be copied
+network_share_path = "//server/share/path/"
+
+# Read the file paths from the text file
+with open(file_list_path, "r") as file_list:
+    file_paths = file_list.read().splitlines()
+
+# Zip the files
+zip_path = "zipped_files.zip"
+with zipfile.ZipFile(zip_path, "w") as my_zip:
+    for file_path in file_paths:
+        my_zip.write(file_path)
+
+# Get the machine name
+machine_name = socket.gethostname()
+
+# Create a new folder on the network share with the machine name
+destination_path = os.path.join(network_share_path, machine_name)
+if not os.path.exists(destination_path):
+    os.mkdir(destination_path)
+
+# Copy the zip file to the network share folder
+shutil.copy(zip_path, destination_path)
+
+# Delete the zip file from the current directory
+os.remove(zip_path)
