@@ -1,0 +1,33 @@
+import cx_Oracle
+import xlsxwriter
+
+# Connect to the Oracle database
+dsn_tns = cx_Oracle.makedsn('<host>', '<port>', service_name='<service_name>')
+conn = cx_Oracle.connect(user='<username>', password='<password>', dsn=dsn_tns)
+
+# Define the tables to export
+tables = ['person', 'application', 'history']
+
+# Create a new Excel file
+workbook = xlsxwriter.Workbook('export.xlsx')
+
+# Iterate over the tables and export their data to separate sheets in the Excel file
+for table_name in tables:
+    # Execute a SELECT statement to fetch the data from the table
+    cursor = conn.cursor()
+    cursor.execute(f'SELECT * FROM {table_name}')
+
+    # Create a new sheet in the Excel file and write the data to it
+    worksheet = workbook.add_worksheet(table_name)
+    for row_num, row_data in enumerate(cursor):
+        for col_num, col_data in enumerate(row_data):
+            worksheet.write(row_num, col_num, col_data)
+
+    # Close the cursor
+    cursor.close()
+
+# Close the connection to the database and save the Excel file
+conn.close()
+workbook.close()
+
+print('Export complete.')
