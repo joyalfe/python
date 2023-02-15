@@ -1,0 +1,23 @@
+import pandas as pd
+import cx_Oracle
+
+# Connect to the Oracle database
+dsn_tns = cx_Oracle.makedsn('<host>', '<port>', service_name='<service_name>')
+conn = cx_Oracle.connect(user='<username>', password='<password>', dsn=dsn_tns)
+
+# Define the tables to export
+tables = ['person', 'application', 'history']
+
+# Export each table to a separate sheet in an Excel file
+with pd.ExcelWriter('export.xlsx') as writer:
+    for table_name in tables:
+        # Load the data from the table into a Pandas DataFrame
+        df = pd.read_sql(f'SELECT * FROM {table_name}', con=conn)
+
+        # Write the DataFrame to a sheet in the Excel file
+        df.to_excel(writer, sheet_name=table_name, index=False)
+
+# Close the connection to the database
+conn.close()
+
+print('Export complete.')
