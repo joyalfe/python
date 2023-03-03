@@ -1,0 +1,40 @@
+'''
+python script using pandas that will go to network share //test/ go inside every folder present and read data.json file and the read the property machinename, count and error_count key and its value from json, after reading these values for every data.json file it will create a excel file with name summary.xlsx file and export this data to it.
+'''
+
+
+import os
+import json
+import pandas as pd
+
+# set the network share path
+share_path = "//test/"
+
+# create an empty dataframe to store the summary data
+summary_df = pd.DataFrame(columns=["Machine Name", "Count", "Error Count"])
+
+# loop through all folders in the network share path
+for root, dirs, files in os.walk(share_path):
+    for file in files:
+        # check if the file is a data.json file
+        if file == "data.json":
+            # read the json data from the file
+            file_path = os.path.join(root, file)
+            with open(file_path, "r") as f:
+                json_data = json.load(f)
+            
+            # extract the machine name, count, and error count values
+            machine_name = json_data["machinename"]
+            count = json_data["count"]
+            error_count = json_data["error_count"]
+            
+            # add the extracted data to the summary dataframe
+            summary_df = summary_df.append({
+                "Machine Name": machine_name,
+                "Count": count,
+                "Error Count": error_count
+            }, ignore_index=True)
+
+# create an excel file named summary.xlsx and export the summary data to it
+summary_path = os.path.join(share_path, "summary.xlsx")
+summary_df.to_excel(summary_path, index=False)
