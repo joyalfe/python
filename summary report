@@ -1,0 +1,52 @@
+'''
+python script that will go to network share //test/ go inside every folder present and read data.json file and the read the property machinename, count and error_count key and its value from json, after reading these values for every data.json file it will create a excel file with name summary.xlsx file and export this data to it.
+'''
+
+
+import os
+import json
+import openpyxl
+
+# Define the path to the network share
+path = r"\\test"
+
+# Create a dictionary to store the machine names, counts, and error counts
+summary_data = {}
+
+# Iterate over every folder in the network share
+for dirpath, dirnames, filenames in os.walk(path):
+    # Check if there is a data.json file in the folder
+    if "data.json" in filenames:
+        # Read the contents of the data.json file
+        with open(os.path.join(dirpath, "data.json"), "r") as f:
+            data = json.load(f)
+            # Get the machine name, count, and error count values
+            machine_name = data.get("machinename")
+            count = data.get("count")
+            error_count = data.get("error_count")
+            # Add the values to the summary_data dictionary
+            if machine_name not in summary_data:
+                summary_data[machine_name] = {"count": count, "error_count": error_count}
+            else:
+                summary_data[machine_name]["count"] += count
+                summary_data[machine_name]["error_count"] += error_count
+
+# Create a new Excel workbook and worksheet
+workbook = openpyxl.Workbook()
+worksheet = workbook.active
+
+# Write the header row
+worksheet.cell(row=1, column=1, value="Machine Name")
+worksheet.cell(row=1, column=2, value="Count")
+worksheet.cell(row=1, column=3, value="Error Count")
+
+# Write the data to the worksheet
+row_num = 2
+for machine_name, data in summary_data.items():
+    worksheet.cell(row=row_num, column=1, value=machine_name)
+    worksheet.cell(row=row_num, column=2, value=data["count"])
+    worksheet.cell(row=row_num, column=3, value=data["error_count"])
+    row_num += 1
+
+# Save the workbook to a file
+workbook.save("summary.xlsx")
