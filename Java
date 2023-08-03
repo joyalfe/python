@@ -1,0 +1,34 @@
+import subprocess
+import time
+import re
+
+def start_jar(jar_path):
+    process = subprocess.Popen(['java', '-jar', jar_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    time.sleep(2)  # Give some time for the jar file to start
+    return process
+
+def stop_jar(process):
+    process.terminate()
+    process.wait()
+
+def get_jar_port(process):
+    for line in process.stdout:
+        match = re.search(r'\b(\d{2,5})\b', line.decode('utf-8'))
+        if match:
+            return int(match.group(0))
+
+if __name__ == "__main__":
+    jar_file_path = "your_jar_file.jar"
+
+    print("Starting the JAR file...")
+    process = start_jar(jar_file_path)
+
+    port = get_jar_port(process)
+    if port:
+        print(f"The JAR file is running on port {port}.")
+    else:
+        print("Failed to detect the port of the JAR file.")
+
+    input("Press Enter to stop the JAR file...")
+    stop_jar(process)
+    print("JAR file stopped.")
