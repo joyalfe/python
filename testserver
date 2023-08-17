@@ -1,0 +1,31 @@
+import http.server
+import json
+
+class MyHandler(http.server.BaseHTTPRequestHandler):
+    def _send_response(self, response_code, message):
+        self.send_response(response_code)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(message.encode())
+
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        try:
+            json_data = json.loads(post_data)
+            account = json_data.get('account', 'N/A')
+            action = json_data.get('action', 'N/A')
+            environment = json_data.get('environment', 'N/A')
+            response_msg = f"Received POST request\nAccount: {account}\nAction: {action}\nEnvironment: {environment}"
+            self._send_response(200, response_msg)
+        except json.JSONDecodeError:
+            self._send_response(400, "Invalid JSON data")
+
+def run_server(server_class=http.server.HTTPServer, handler_class=MyHandler, port=8080):
+    server_address = ('', port)
+    httpd = server_class(server_address, handler_class)
+    print(f"Starting server on port {port}")
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run_server()
