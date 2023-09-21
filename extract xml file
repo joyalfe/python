@@ -1,37 +1,67 @@
 import xml.etree.ElementTree as ET
 import openpyxl
 
-# Step 1: Parse the XML schema file
-xml_file = 'your_schema.xml'  # Replace with the path to your XML schema file
+# Step 1: Parse the XML file
+xml_file = 'your_file.xml'  # Replace with the path to your XML file
 tree = ET.parse(xml_file)
 root = tree.getroot()
 
-# Define the XML tag names you want to extract
-target_tag_names = ['element', 'complexType']  # Add your desired tag names here
+# Step 2: Extract information from the XML part
+# Define the XML tag names you want to extract from the XML part
+xml_target_tag_names = ['element', 'complexType']  # Add your desired XML tag names here
 
-# Create a list to store extracted information
-schema_info = []
+# Create a list to store extracted XML information
+xml_info = []
 
-# Iterate through the XML and extract information based on tag names
+# Iterate through the XML part and extract information based on tag names
 for element in root.iter():
-    if element.tag in target_tag_names:
+    if element.tag in xml_target_tag_names:
         element_name = element.get('name', '')
         element_type = element.get('type', '')
-        schema_info.append((element_name, element_type))
+        xml_info.append((element_name, element_type))
 
-# Step 2: Create or open an Excel workbook and worksheet
+# Step 3: Parse the XSD part (assuming it's embedded within the XML as a text)
+# You might need to adapt this part based on how the XSD is embedded in your XML
+xsd_text = root.find('.//xsd:element', namespaces={'xsd': 'http://www.w3.org/2001/XMLSchema'})
+
+# Step 4: Extract information from the XSD part
+# Define the XSD tag names you want to extract from the XSD part
+xsd_target_tag_names = ['element', 'complexType']  # Add your desired XSD tag names here
+
+# Create a list to store extracted XSD information
+xsd_info = []
+
+if xsd_text is not None:
+    xsd_root = ET.fromstring(xsd_text.text)
+
+    # Iterate through the XSD part and extract information based on tag names
+    for element in xsd_root.iter():
+        if element.tag in xsd_target_tag_names:
+            element_name = element.get('name', '')
+            element_type = element.get('type', '')
+            xsd_info.append((element_name, element_type))
+
+# Step 5: Create or open an Excel workbook and worksheet
 excel_file = 'schema_info.xlsx'  # Replace with the desired Excel file name
 workbook = openpyxl.Workbook()
 worksheet = workbook.active
 worksheet.title = 'Schema Information'
 
-# Step 3: Write the extracted information to the Excel table
-# You can customize this part based on your extracted data structure
-header = ['Element Name', 'Element Type']
-worksheet.append(header)  # Write headers
+# Step 6: Write the extracted information from the XML part to the Excel table
+# You can customize this part based on your extracted XML data structure
+xml_header = ['XML Element Name', 'XML Element Type']
+worksheet.append(xml_header)  # Write XML headers
 
-for row_data in schema_info:
-    worksheet.append(row_data)  # Write data rows
+for row_data in xml_info:
+    worksheet.append(row_data)  # Write XML data rows
+
+# Step 7: Write the extracted information from the XSD part to the Excel table
+# You can customize this part based on your extracted XSD data structure
+xsd_header = ['XSD Element Name', 'XSD Element Type']
+worksheet.append(xsd_header)  # Write XSD headers
+
+for row_data in xsd_info:
+    worksheet.append(row_data)  # Write XSD data rows
 
 # Save the Excel file
 workbook.save(excel_file)
