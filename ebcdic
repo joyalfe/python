@@ -1,0 +1,60 @@
+import ebcdic
+
+# Initialize EBCDIC to ASCII table
+ebcdic_to_ascii_table = ebcdic.get_codec('cp037')
+
+# Function to handle RECFM=F, FB, V, VB
+def convert_record_format(record, recfm):
+    if recfm in ['F', 'FB']:
+        # Fixed-length records, simply decode
+        return record.decode('cp037')  # EBCDIC to ASCII
+    elif recfm == 'V':
+        # Variable-length record, first 2 bytes contain length
+        record_length = int.from_bytes(record[:2], byteorder='big')  # Length from first 2 bytes
+        return record[2:record_length].decode('cp037')
+    elif recfm == 'VB':
+        # Variable Block format, first 4 bytes give block descriptor
+        block_length = int.from_bytes(record[:4], byteorder='big')
+        return record[4:block_length].decode('cp037')
+    else:
+        raise ValueError(f"Unsupported RECFM: {recfm}")
+
+# Function to handle Carriage Control
+def handle_carriage_control(record, cctype):
+    if cctype == 'A':
+        carriage_ctrl = record[0]
+        data = record[1:]  # Remove the carriage control character
+        if carriage_ctrl == '1':
+            return "\n" + data  # New page
+        elif carriage_ctrl == '0':
+            return "\n\n" + data  # Double spacing
+        else:
+            return data  # Single line
+    elif cctype == 'M':
+        return record  # No carriage control to handle
+    elif cctype == 'Z':
+        return record  # Specific zoned decimal logic would go here
+    else:
+        raise ValueError(f"Unsupported CCTYPE: {cctype}")
+
+# Main function to convert EBCDIC to ASCII with support for RECFM and CCTYPE
+def ebcdic_to_ascii_with_format(data, recfm='F', cctype='M'):
+    ascii_data = []
+    for record in data:
+        # Handle the record format
+        converted_record = convert_record_format(record, recfm)
+        
+        # Handle carriage control
+        final_record = handle_carriage_control(converted_record, cctype)
+        
+        ascii_data.append(final_record)
+    
+    return "\n".join(ascii_data)
+
+# Example usage
+ebcdic_data = [b'\xc8\x85\x93\x81', b'\xc5\xc6\xc7\xc8']  # EBCDIC bytes
+recfm = 'F'  # Fixed record format
+cctype = 'A'  # ANSI carriage control
+
+ascii_output = ebcdic_to_ascii_with_format(ebcdic_data, recfm, cctype)
+print(ascii_output)
